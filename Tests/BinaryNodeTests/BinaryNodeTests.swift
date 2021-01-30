@@ -576,119 +576,6 @@ final class BinaryNodeTests: XCTestCase {
         XCTAssertEqual(resultValues, expectedValues)
     }
     
-    // MARK: - Equality utilities tests
-    // MARK: - isEqual(to:) tests
-    func testIsEqualTo_whenOtherIsSameIstance_thenReturnsTrue() {
-        let other: TestNode<String, Int> = sut
-        XCTAssertTrue(sut.isEqual(to: other))
-    }
-    
-    func testIsEqualTo_whenChildrenAreNil() {
-        XCTAssertNil(sut.left)
-        XCTAssertNil(sut.right)
-        
-        // when key and value are equal, then returns true
-        let other = TestNode(key: sut.key, value: sut.value)
-        XCTAssertTrue(sut.isEqual(to: other))
-        
-        // when either/both key or/and value are different,
-        // then returns false
-        other.key = givenSmallerKeysThanSutKey().randomElement()!
-        XCTAssertFalse(sut.isEqual(to: other))
-        
-        other.key = sut.key
-        other.value = sut.value * 100
-        XCTAssertFalse(sut.isEqual(to: other))
-        
-        other.key = givenLargerKeysThanSutKey().randomElement()!
-        XCTAssertFalse(sut.isEqual(to: other))
-    }
-    
-    func testIsEqual_whenEitherOrBothChildrenAreNotNil() {
-        whenChildrenAreTrees()
-        // Both children are not nil
-        
-        // When isEqual(to:) returns true for
-        // both left and right, then returns true
-        let other = TestNode(key: sut.key, value: sut.value)
-        let otherLeft = TestNode(key: sut.left!.key, value: sut.left!.value)
-        otherLeft.left = TestNode(key: sut.left!.left!.key, value: sut.left!.left!.value)
-        otherLeft.right = TestNode(key: sut.left!.right!.key, value: sut.left!.right!.value)
-        XCTAssertTrue(sut.left!.isEqual(to: otherLeft))
-        other.left = otherLeft
-        
-        let otherRight = TestNode(key: sut.right!.key, value: sut.right!.value)
-        otherRight.left = TestNode(key: sut.right!.left!.key, value: sut.right!.left!.value)
-        otherRight.right = TestNode(key: sut.right!.right!.key, value: sut.right!.right!.value)
-        XCTAssertTrue(sut.right!.isEqual(to: otherRight))
-        other.right = otherRight
-        
-        XCTAssertTrue(sut.isEqual(to: other))
-        
-        // When isEqual(to:) returns false on left or right
-        // children, then returns false:
-        otherLeft.value *= 100
-        XCTAssertFalse(sut.left!.isEqual(to: otherLeft))
-        XCTAssertFalse(sut.isEqual(to: other))
-        
-        otherLeft.value = sut.left!.value
-        XCTAssertTrue(sut.left!.isEqual(to: otherLeft))
-        otherRight.value *= 100
-        XCTAssertFalse(sut.right!.isEqual(to: otherRight))
-        XCTAssertFalse(sut.isEqual(to: other))
-        otherRight.value = sut.right!.value
-        XCTAssertTrue(sut.right!.isEqual(to: otherRight))
-        
-        // Either children are nil
-        let sutLeft = sut.left!
-        let sutRight = sut.right!
-        
-        // when both left are nil and both right are not nil
-        // and are equal, then returns true:
-        sut.left = nil
-        other.left = nil
-        XCTAssertTrue(sut.right!.isEqual(to: otherRight))
-        XCTAssertTrue(sut.isEqual(to: other))
-        // …returns false if right are different:
-        otherRight.value *= 10
-        XCTAssertFalse(sut.right!.isEqual(to: otherRight))
-        XCTAssertFalse(sut.isEqual(to: other))
-        otherRight.value = sut.right!.value
-        
-        // Same tests for when both right are nil, and both
-        // left aren't
-        sut.left = sutLeft
-        other.left = otherLeft
-        sut.right = nil
-        other.right = nil
-        XCTAssertTrue(sut.left!.isEqual(to: otherLeft))
-        XCTAssertTrue(sut.isEqual(to: other))
-        otherLeft.value *= 10
-        XCTAssertFalse(sut.left!.isEqual(to: otherLeft))
-        XCTAssertFalse(sut.isEqual(to: other))
-        
-        // Always returns false for all other combos:
-        
-        // left is nil other.left is not nil
-        sut.left = nil
-        XCTAssertFalse(sut.isEqual(to: other))
-        
-        // left is not nil, other.left is nil
-        sut.left = sutLeft
-        other.left = nil
-        XCTAssertFalse(sut.isEqual(to: other))
-        
-        // right is nil, other.right is not nil
-        other.left = otherLeft
-        sut.right = nil
-        XCTAssertFalse(sut.isEqual(to: other))
-        
-        // right is not nil, other.right is nil
-        sut.right = sutRight
-        other.right = nil
-        XCTAssertFalse(sut.isEqual(to: other))
-    }
-    
     // MARK: - Tree traversal tests
     // MARK: - inOrderTraverse(_:) tests
     func testInOrderTraverse_whenBodyThrows_thenThrows() {
@@ -1099,7 +986,7 @@ final class BinaryNodeTests: XCTestCase {
         for needle in leftTreeKeys {
             result = sut.binarySearch(needle)
             XCTAssertNotNil(result)
-            XCTAssertEqual(result, sut.left!.binarySearch(needle))
+            XCTAssertTrue(result === sut.left!.binarySearch(needle), "needle was not found in left tree")
         }
         // when key is less than node.key and key is not in left tree,
         // then returns nil
@@ -1126,13 +1013,6 @@ final class TestNode<Key, Value>: BinaryNode {
     init(key: Key, value: Value) {
         self.key = key
         self.value = value
-    }
-    
-}
-
-extension TestNode: Equatable where Key: Comparable, Value: Comparable {
-    static func == (lhs: TestNode<Key, Value>, rhs: TestNode<Key, Value>) -> Bool {
-        lhs.isEqual(to: rhs)
     }
     
 }

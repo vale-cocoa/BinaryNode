@@ -164,45 +164,6 @@ extension BinaryNode {
     
 }
 
-// MARK: - Equality utility
-extension BinaryNode where Key: Equatable, Value: Equatable {
-    public func isEqual(to other: Self) -> Bool {
-        guard other !== self else { return true }
-        
-        guard
-            key == other.key,
-            value == other.value
-        else { return false }
-        
-        switch (self.left, other.left) {
-        case (nil, nil):
-            break
-        
-        case (.some(let lL), .some(let rL))
-                where lL.isEqual(to: rL):
-            break
-        
-        default:
-            return false
-        }
-        
-        switch (self.right, other.right) {
-        case (nil, nil):
-            break
-        
-        case (.some(let lR), .some(let rR))
-                where lR.isEqual(to: rR):
-            break
-        
-        default:
-            return false
-        }
-        
-        return true
-    }
-    
-}
-
 // MARK: - Tree and binary search tree operations
 // MARK: - Tree traversal operations
 extension BinaryNode {
