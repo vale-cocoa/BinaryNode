@@ -3,6 +3,27 @@
 //  BinaryNodeTests
 //
 //  Created by Valeriano Della Longa on 2021/01/27.
+//  Copyright © 2020 Valeriano Della Longa
+//
+//  Permission is hereby granted, free of charge, to any person
+//  obtaining a copy of this software and associated documentation
+//  files (the "Software"), to deal in the Software without
+//  restriction, including without limitation the rights to use, copy,
+//  modify, merge, publish, distribute, sublicense, and/or sell copies
+//  of the Software, and to permit persons to whom the Software is
+//  furnished to do so, subject to the following conditions:
+//
+//  The above copyright notice and this permission notice shall be
+//  included in all copies or substantial portions of the Software.
+//
+//  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+//  EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+//  MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+//  NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS
+//  BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN
+//  ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+//  CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+//  SOFTWARE.
 //
 
 import XCTest
@@ -995,8 +1016,122 @@ final class BinaryNodeTests: XCTestCase {
         }
     }
     
+    // MARK: - sequentialSearch(_:) tests
+    func testSequentialSearch_whenBothChildrenAreNil() {
+        XCTAssertNil(sut.left)
+        XCTAssertNil(sut.right)
+        
+        // when needle != key, then returns nil
+        for needle in givenKeys where needle != sut.key {
+            XCTAssertNil(sut.sequentialSearch(needle))
+        }
+        
+        // when needle == key, then returns self
+        XCTAssertTrue(sut.sequentialSearch(sut.key) === sut, "has returned different instance than self")
+    }
+    
+    func testSequentialSearch_whenEitherOrBothChildrenAreLeaves() {
+        let leftLeaf = givenRandomLeaf()
+        let rightLeaf = givenRandomLeaf()
+        
+        // left is leaf, right is nil
+        sut.left = leftLeaf
+        XCTAssertNil(sut.right)
+        
+        // when needle is key, then returns self
+        XCTAssertTrue(sut.sequentialSearch(sut.key) === sut, "has returned different instance than self")
+        // when needle is not key and not left key, then
+        // returns nil:
+        for needle in givenKeys where (needle != sut.key && needle != leftLeaf.key) {
+            XCTAssertNil(sut.sequentialSearch(needle))
+        }
+        // when needle is not equal to key and
+        // needle is equal to left.key, then returns left
+        if let needle = givenKeys
+            .first(where: { ($0 != sut.key && $0 == leftLeaf.key) })
+        {
+            XCTAssertTrue(sut.sequentialSearch(needle) === leftLeaf, "did not return left leaf")
+        }
+        
+        // left is nil, right is leaf
+        sut.left = nil
+        sut.right = rightLeaf
+        
+        // when needle is key, then returns self
+        XCTAssertTrue(sut.sequentialSearch(sut.key) === sut, "has returned different instance than self")
+        // when needle is not key and not right key, then
+        // returns nil:
+        for needle in givenKeys where (needle != sut.key && needle != rightLeaf.key) {
+            XCTAssertNil(sut.sequentialSearch(needle))
+        }
+        // when needle is not equal to key and
+        // needle is equal to right.key, then returns right
+        if let needle = givenKeys
+            .first(where: { ($0 != sut.key && $0 == rightLeaf.key) })
+        {
+            XCTAssertTrue(sut.sequentialSearch(needle) === rightLeaf, "did not return right leaf")
+        }
+        
+        // both children are leaves
+        sut.left = leftLeaf
+        // when needle is key, then returns self
+        XCTAssertTrue(sut.sequentialSearch(sut.key) === sut, "has returned different instance than self")
+        // when needle is not key and not left.key
+        // or right.key, then returns nil
+        // returns nil:
+        for needle in givenKeys where (needle != sut.key && needle != rightLeaf.key && needle != leftLeaf.key) {
+            XCTAssertNil(sut.sequentialSearch(needle))
+        }
+        // when needle is not equal to key and
+        // needle is equal to left.key, then returns left
+        if let needle = givenKeys
+            .first(where: { ($0 != sut.key && $0 == leftLeaf.key && $0 != rightLeaf.key) })
+        {
+            XCTAssertTrue(sut.sequentialSearch(needle) === leftLeaf, "did not return left leaf")
+        }
+        // when needle is not equal to key and is not equal
+        // to left.key and needle is equal to right.key,
+        // then returns right
+        if let needle = givenKeys
+            .first(where: { ($0 != sut.key && $0 != leftLeaf.key && $0 == rightLeaf.key) })
+        {
+            XCTAssertTrue(sut.sequentialSearch(needle) === rightLeaf, "did not return right leaf")
+        }
+    }
+    
+    func testSequentialSearch_whenChildrenAreTrees() {
+        whenChildrenAreTrees()
+        
+        // when needle == key, then returns node
+        XCTAssertTrue(sut.binarySearch(sut.key) === sut, "has returned a different instance than sut")
+        // when needle is not node key, and both left and right
+        // returns nil for sequentialSearch, then returns nil
+        for needle in givenKeys
+            .filter({ $0 != sut.key && sut.left?.sequentialSearch($0) == nil && sut.right?.sequentialSearch($0) == nil })
+        {
+            XCTAssertNil(sut.sequentialSearch(needle))
+        }
+        
+        // when needle is not node key, and sequentialSearch
+        // on left tree returns a node, then returns that node
+        for needle in givenKeys
+            .filter({ $0 != sut.key && sut.left?.sequentialSearch($0) != nil })
+        {
+            XCTAssertTrue(sut.sequentialSearch(needle) === sut.left?.sequentialSearch(needle))
+        }
+        
+        // when needle is not node key, and sequentialSearch
+        // on left tree returns nil and sequentialSearch
+        // on right tree returns a node,
+        // then returns that node
+        for needle in givenKeys
+            .filter({ $0 != sut.key && sut.left?.sequentialSearch($0) == nil && sut.right?.sequentialSearch($0) != nil })
+        {
+            XCTAssertTrue(sut.sequentialSearch(needle) === sut.right?.sequentialSearch(needle))
+        }
+    }
+    
 }
-
 
 // MARK: - TestNode
 final class TestNode<Key, Value>: BinaryNode {

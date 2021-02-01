@@ -3,24 +3,53 @@
 //  BinaryNode
 //
 //  Created by Valeriano Della Longa on 2021/01/27.
+//  Copyright © 2020 Valeriano Della Longa
+//
+//  Permission is hereby granted, free of charge, to any person
+//  obtaining a copy of this software and associated documentation
+//  files (the "Software"), to deal in the Software without
+//  restriction, including without limitation the rights to use, copy,
+//  modify, merge, publish, distribute, sublicense, and/or sell copies
+//  of the Software, and to permit persons to whom the Software is
+//  furnished to do so, subject to the following conditions:
+//
+//  The above copyright notice and this permission notice shall be
+//  included in all copies or substantial portions of the Software.
+//
+//  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+//  EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+//  MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+//  NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS
+//  BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN
+//  ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+//  CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+//  SOFTWARE.
 //
 
 import Foundation
-
+/// A protocol defining functionalites for a 2-node data structure with reference semantics.
+/// That is a 2-node is a node with a key/value pair as element and two children nodes,
+/// one at its left and one at its right.
+/// Thus recursively defining a binary tree.
 public protocol BinaryNode: AnyObject, Sequence where Element == (Key, Value) {
     
     associatedtype Key
     
     associatedtype Value
     
+    /// The key for this node
     var key: Key { get }
     
+    /// The value stored in this node
     var value: Value { get }
     
+    /// The number of elements for this node.
     var count: Int { get }
     
+    /// The child node to the left of this node.
     var left: Self? { get }
     
+    /// The child node to the right of this node.
     var right: Self? { get }
 }
 
@@ -34,8 +63,9 @@ extension BinaryNode {
 
 // MARK: - Sequence default implementation
 extension BinaryNode {
+    /// The key-value pair for this node.
     public var element: (Key, Value) { (key, value) }
-        
+    
     public var underestimatedCount: Int {
         1 + (left != nil ? 1 : 0) + (right != nil ? 1 : 0)
     }
@@ -167,30 +197,57 @@ extension BinaryNode {
 // MARK: - Tree and binary search tree operations
 // MARK: - Tree traversal operations
 extension BinaryNode {
+    /// Traverse the binary tree rooted at this node in-order executing the given `body` closure
+    /// on each node during the traversal operation.
+    ///
+    /// - Parameter _: a closure to execute on every node during the traversal.
+    /// - Complexity:   O(`n`) where `n` is the count of nodes in the tree rooted at this
+    ///                 node.
     public func inOrderTraverse(_ body: (Self) throws -> Void) rethrows {
         try left?.inOrderTraverse(body)
         try body(self)
         try right?.inOrderTraverse(body)
     }
-    
+    /// Traverse the binary tree rooted at this node in reverse-in-order executing the given
+    /// `body` closure on each node during the traversal operation.
+    ///
+    /// - Parameter _: a closure to execute on every node during the traversal.
+    /// - Complexity:   O(`n`) where `n` is the count of nodes in the tree rooted at this
+    ///                 node.
     public func reverseInOrderTraverse(_ body: (Self) throws -> Void) rethrows {
         try right?.reverseInOrderTraverse(body)
         try body(self)
         try left?.reverseInOrderTraverse(body)
     }
-    
+    /// Traverse the binary tree rooted at this node in pre-order executing the given `body`
+    /// closure on each node during the traversal operation.
+    ///
+    /// - Parameter _: a closure to execute on every node during the traversal.
+    /// - Complexity:   O(`n`) where `n` is the count of nodes in the tree rooted at this
+    ///                 node.
     public func preOrderTraverse(_ body: (Self) throws -> Void) rethrows {
         try body(self)
         try self.left?.preOrderTraverse(body)
         try self.right?.preOrderTraverse(body)
     }
     
+    /// Traverse the binary tree rooted at this node in post-order executing the given `body`
+    /// closure on each node during the traversal operation.
+    ///
+    /// - Parameter _: a closure to execute on every node during the traversal.
+    /// - Complexity:   O(`n`) where `n` is the count of nodes in the tree rooted at this
+    ///                 node.
     public func postOrderTraverse(_ body: (Self) throws -> Void) rethrows {
         try left?.postOrderTraverse(body)
         try right?.postOrderTraverse(body)
         try body(self)
     }
-    
+    /// Traverse the binary tree rooted at this node in level-order executing the given `body`
+    /// closure on each node during the traversal operation.
+    ///
+    /// - Parameter _: a closure to execute on every node during the traversal.
+    /// - Complexity:   Amortized O(`n`) where `n` is the count of nodes in the tree
+    ///                 rooted at this node.
     public func levelOrderTraverse(_ body: (Self) throws -> Void) rethrows {
         var currentLevel = _Queue<Self>()
         currentLevel.enqueue(self)
@@ -218,8 +275,10 @@ extension BinaryNode {
 
 // MARK: - paths
 extension BinaryNode {
+    /// The node to traverse in the tree rooted at this node to get to a leaf.
     public typealias Path = [Self]
     
+    /// Every path from this node to a leaf node in the tree rooted at this node.
     public var paths: [Path] { buildPaths(self, current: []) }
     
     fileprivate func buildPaths(_ node: Self, current: Path) -> [Path] {
@@ -243,6 +302,10 @@ extension BinaryNode {
 
 // MARK: - Binary Search Tree utilities
 extension BinaryNode where Key: Comparable {
+    /// A boolean value, `true` when the tree rooted at this node is a Binary Search Tree.
+    ///
+    /// A Binary Search Tree holds the invariant recursively so that the left children has a smaller
+    /// `key` than the node and the right children has a greater `key` than the node.
     public var isBinarySearchTree: Bool {
         if let left = left {
             guard
@@ -261,6 +324,16 @@ extension BinaryNode where Key: Comparable {
         return true
     }
     
+    /// Lookup and returns the node with the given `key` in the tree rooted at this node, by
+    /// adopting a binary search on it.
+    ///
+    /// - Parameter needle: The `key` to lookup for.
+    /// - Returns:  The node in the tree with the given `key`, or `nil` if such a node
+    ///             couldn't be found.
+    /// - Complexity:   O(log *n*) where *n* is the count of nodes in the tree rooted at
+    ///                 this node.
+    /// - Note: If the tree rooted at this node is not a Binary Search Tree, then this method
+    ///         won't behave as expected.
     public func binarySearch(_ needle: Key) -> Self? {
         if needle < key { return left?.binarySearch(needle) }
         if needle > key { return right?.binarySearch(needle) }
@@ -271,6 +344,25 @@ extension BinaryNode where Key: Comparable {
     
 }
 
+// MARK: - Sequential Search
+extension BinaryNode where Key: Equatable {
+    /// Lookup for the node with the given `key` in the tree rooted at this node.
+    ///
+    /// - Parameter needle: The `key` to lookup for.
+    /// - Returns:  The node in the tree with the given `key`, or `nil` if such a node
+    ///             couldn't be found.
+    /// - Complexity:   O(*n*) where *n* is the count of nodes in the tree rooted at this
+    ///                 node.
+    /// - Note: This search algorithm prioritizes the subtree on the left over the one on the
+    ///         right when recursively checking a node which has not its `key` equal to the
+    ///         one looked for.
+    public func sequentialSearch(_ needle: Key) -> Self? {
+        if needle == key { return self }
+        
+        return left?.sequentialSearch(needle) ?? right?.sequentialSearch(needle)
+    }
+    
+}
 
 // MARK: - Queue used internally for level order tree traversal
 fileprivate struct _Queue<Element>: Sequence {
