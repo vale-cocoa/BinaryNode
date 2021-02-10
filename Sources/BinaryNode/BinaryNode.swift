@@ -275,15 +275,25 @@ extension BinaryNode {
 
 // MARK: - paths
 extension BinaryNode {
-    /// The node to traverse in the tree rooted at this node to get to a leaf.
-    public typealias Path = [Self]
+    /// The nodes to traverse in the tree rooted at this node to get to a leaf.
+    public typealias Path = [WrappedNode<Self>]
     
-    /// Every path from this node to a leaf node in the tree rooted at this node.
+    /// Every path to leaf nodes in the tree rooted at this node.
+    ///
+    /// Every node in a path is wrapped as an `unowned(unsafe)` instance,
+    /// not to strongly reference it and increase its reference count: therefore a path
+    /// is not reliable to be stored.
+    /// Attempting to access a node in a path when the original node was already
+    /// deallocated results in unexpected beahvior and potential run-time errors.
+    /// Additionally when a node is changed, the path in which was previously stored
+    /// might as well not be valid anymore.
+    /// - Complexity:   O(*n²*) where *n* is the lenght of the tree
+    ///                 rooted at this node.
     public var paths: [Path] { buildPaths(self, current: []) }
     
     fileprivate func buildPaths(_ node: Self, current: Path) -> [Path] {
         var paths = [Path]()
-        let updated = current + [node]
+        let updated = current + [WrappedNode(node: node)]
         if node.left == nil && node.right == nil {
             paths.append(updated)
         } else {
@@ -396,5 +406,13 @@ fileprivate struct _Queue<Element>: Sequence {
         
         return AnyIterator { elements.next() }
     }
+    
+}
+
+// MARK: - WrappedNode
+/// Wraps an `unowned(unsafe)` instance of `BinaryNode` used
+/// to weakly reference node instances without incrementing their reference count.
+public struct WrappedNode<Node: BinaryNode> {
+    unowned(unsafe) let node: Node
     
 }

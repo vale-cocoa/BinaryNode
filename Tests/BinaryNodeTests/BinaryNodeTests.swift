@@ -754,7 +754,7 @@ final class BinaryNodeTests: XCTestCase {
         XCTAssertEqual(result.count, expectedResult.count)
         for (sutPath, expectedPath) in zip(result, expectedResult) {
             XCTAssertEqual(sutPath.count, expectedPath.count)
-            for (sutNode, expectedNode) in zip(sutPath, expectedPath) {
+            for (sutNode, expectedNode) in zip(sutPath.map({ $0.node }), expectedPath) {
                 XCTAssertTrue(sutNode === expectedNode, "sutPath: \(sutPath) is different from expected one: \(expectedPath)")
             }
         }
