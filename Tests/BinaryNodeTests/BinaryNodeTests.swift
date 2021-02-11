@@ -3,7 +3,7 @@
 //  BinaryNodeTests
 //
 //  Created by Valeriano Della Longa on 2021/01/27.
-//  Copyright © 2020 Valeriano Della Longa
+//  Copyright © 2021 Valeriano Della Longa
 //
 //  Permission is hereby granted, free of charge, to any person
 //  obtaining a copy of this software and associated documentation
@@ -1129,25 +1129,6 @@ final class BinaryNodeTests: XCTestCase {
         {
             XCTAssertTrue(sut.sequentialSearch(needle) === sut.right?.sequentialSearch(needle))
         }
-    }
-    
-}
-
-// MARK: - TestNode
-final class TestNode<Key, Value>: BinaryNode {
-    typealias Element = (Key, Value)
-    
-    var key: Key
-    
-    var value: Value
-    
-    var left: TestNode? = nil
-    
-    var right: TestNode? = nil
-    
-    init(key: Key, value: Value) {
-        self.key = key
-        self.value = value
     }
     
 }

@@ -3,7 +3,7 @@
 //  BinaryNode
 //
 //  Created by Valeriano Della Longa on 2021/01/27.
-//  Copyright © 2020 Valeriano Della Longa
+//  Copyright © 2021 Valeriano Della Longa
 //
 //  Permission is hereby granted, free of charge, to any person
 //  obtaining a copy of this software and associated documentation
@@ -371,9 +371,9 @@ extension BinaryNode where Key: Equatable {
     ///             couldn't be found.
     /// - Complexity:   O(*n*) where *n* is the count of nodes in the tree rooted at this
     ///                 node.
-    /// - Note: This search algorithm prioritizes the subtree on the left over the one on the
-    ///         right when recursively checking a node which has not its `key` equal to the
-    ///         one looked for.
+    /// - Note: This search algorithm uses a pre-order tree traversal algorithm.
+    ///         Hence checking for queried key on currently traversed node,
+    ///         then recursively on its left and right nodes.
     public func sequentialSearch(_ needle: Key) -> Self? {
         if needle == key { return self }
         
@@ -402,6 +402,7 @@ public struct WrappedNode<Node: BinaryNode> {
         
         return WrappedNode(node: node.right!)
     }
+    
 }
 
 // MARK: - Queue used internally for level order tree traversal
