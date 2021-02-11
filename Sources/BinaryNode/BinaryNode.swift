@@ -71,22 +71,24 @@ extension BinaryNode {
     }
     
     public func makeIterator() -> AnyIterator<Element> {
-        var stack = [Self]()
-        var node: Self? = self
-        
-        return AnyIterator {
-            while let n = node {
-                stack.append(n)
-                node = n.left
+        withExtendedLifetime(self, {
+            var stack = [WrappedNode<Self>]()
+            var wrappedNode: WrappedNode<Self>? = WrappedNode(node: $0)
+            
+            return AnyIterator {
+                while let n = wrappedNode {
+                    stack.append(n)
+                    wrappedNode = n.wrappedLeft
+                }
+                guard
+                    let current = stack.popLast()
+                else { return nil }
+                
+                defer { wrappedNode = current.wrappedRight }
+                
+                return current.node.element
             }
-            guard
-                let current = stack.popLast()
-            else { return nil }
-            
-            defer { node = current.right }
-            
-            return current.element
-        }
+        })
     }
     
     public func forEach(_ body: (Element) throws -> Void) rethrows {
@@ -249,22 +251,24 @@ extension BinaryNode {
     /// - Complexity:   Amortized O(`n`) where `n` is the count of nodes in the tree
     ///                 rooted at this node.
     public func levelOrderTraverse(_ body: (Self) throws -> Void) rethrows {
-        var currentLevel = _Queue<Self>()
-        currentLevel.enqueue(self)
-        
-        try _levelOrder(currentLevel: &currentLevel, body: body)
+        try withExtendedLifetime(self, {
+            var currentLevel = _Queue<WrappedNode<Self>>()
+            currentLevel.enqueue(WrappedNode(node: $0))
+            
+            try _levelOrder(currentLevel: &currentLevel, body: body)
+        })
     }
     
     
-    fileprivate func _levelOrder(currentLevel: inout _Queue<Self>, body: (Self) throws -> Void) rethrows {
-        var nextLevel = _Queue<Self>()
+    fileprivate func _levelOrder(currentLevel: inout _Queue<WrappedNode<Self>>, body: (Self) throws -> Void) rethrows {
+        var nextLevel = _Queue<WrappedNode<Self>>()
         
-        while let node = currentLevel.dequeue() {
-            try body(node)
+        while let wrappedNode = currentLevel.dequeue() {
+            try body(wrappedNode.node)
             
-            if let l = node.left { nextLevel.enqueue(l) }
+            if wrappedNode.wrappedLeft != nil { nextLevel.enqueue(wrappedNode.wrappedLeft!) }
             
-            if let r = node.right { nextLevel.enqueue(r) }
+            if wrappedNode.wrappedRight != nil { nextLevel.enqueue(wrappedNode.wrappedRight!) }
         }
         guard !nextLevel.isEmpty else { return }
         
@@ -289,19 +293,23 @@ extension BinaryNode {
     /// might as well not be valid anymore.
     /// - Complexity:   O(*n²*) where *n* is the lenght of the tree
     ///                 rooted at this node.
-    public var paths: [Path] { buildPaths(self, current: []) }
+    public var paths: [Path] {
+        withExtendedLifetime(self, {
+            buildPaths(WrappedNode(node: $0), current: [])
+        })
+    }
     
-    fileprivate func buildPaths(_ node: Self, current: Path) -> [Path] {
+    fileprivate func buildPaths(_ wrappedNode: WrappedNode<Self>, current: Path) -> [Path] {
         var paths = [Path]()
-        let updated = current + [WrappedNode(node: node)]
-        if node.left == nil && node.right == nil {
+        let updated = current + [wrappedNode]
+        if wrappedNode.wrappedLeft == nil && wrappedNode.wrappedRight == nil {
             paths.append(updated)
         } else {
-            if let l = node.left {
-                paths += buildPaths(l, current: updated)
+            if wrappedNode.wrappedLeft != nil {
+                paths += buildPaths(wrappedNode.wrappedLeft!, current: updated)
             }
-            if let r = node.right {
-                paths += buildPaths(r, current: updated)
+            if wrappedNode.wrappedRight != nil {
+                paths += buildPaths(wrappedNode.wrappedRight!, current: updated)
             }
         }
         
@@ -317,17 +325,17 @@ extension BinaryNode where Key: Comparable {
     /// A Binary Search Tree holds the invariant recursively so that the left children has a smaller
     /// `key` than the node and the right children has a greater `key` than the node.
     public var isBinarySearchTree: Bool {
-        if let left = left {
+        if left != nil {
             guard
-                left.key < key,
-                left.isBinarySearchTree
+                left!.key < key,
+                left!.isBinarySearchTree
             else { return false }
         }
         
-        if let right = right {
+        if right != nil {
             guard
-                right.key > key,
-                right.isBinarySearchTree
+                right!.key > key,
+                right!.isBinarySearchTree
             else { return false }
         }
         
@@ -374,6 +382,28 @@ extension BinaryNode where Key: Equatable {
     
 }
 
+// MARK: - WrappedNode
+/// Wraps an `unowned(unsafe)` instance of `BinaryNode` used
+/// to weakly reference node instances without incrementing their reference count.
+public struct WrappedNode<Node: BinaryNode> {
+    /// The wrapped node instance.
+    public unowned(unsafe) let node: Node
+    
+    /// The `left` node of the wrapped node as `WrappedNode`; `nil` when the wrapped node's `left == nil` .
+    public var wrappedLeft: WrappedNode? {
+        guard node.left != nil else { return nil }
+        
+        return WrappedNode(node: node.left!)
+    }
+    
+    /// The `right` node of the wrapped node as `WrappedNode`; `nil` when the wrapped node's `right == nil` .
+    public var wrappedRight: WrappedNode? {
+        guard node.right != nil else { return nil }
+        
+        return WrappedNode(node: node.right!)
+    }
+}
+
 // MARK: - Queue used internally for level order tree traversal
 fileprivate struct _Queue<Element>: Sequence {
     private var enqueued: [Element] = []
@@ -406,13 +436,5 @@ fileprivate struct _Queue<Element>: Sequence {
         
         return AnyIterator { elements.next() }
     }
-    
-}
-
-// MARK: - WrappedNode
-/// Wraps an `unowned(unsafe)` instance of `BinaryNode` used
-/// to weakly reference node instances without incrementing their reference count.
-public struct WrappedNode<Node: BinaryNode> {
-    unowned(unsafe) let node: Node
     
 }
