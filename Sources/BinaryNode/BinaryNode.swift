@@ -403,6 +403,10 @@ public struct WrappedNode<Node: BinaryNode> {
         return WrappedNode(node: node.right!)
     }
     
+    public init(node: Node) {
+        self.node = node
+    }
+    
 }
 
 // MARK: - Queue used internally for level order tree traversal
