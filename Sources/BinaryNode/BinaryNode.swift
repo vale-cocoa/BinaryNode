@@ -403,6 +403,9 @@ public struct WrappedNode<Node: BinaryNode> {
         return WrappedNode(node: node.right!)
     }
     
+    /// Returns a new instance initialized to wrap the given node
+    ///
+    /// - Returns: A new instance wrapping the given node.
     public init(node: Node) {
         self.node = node
     }
