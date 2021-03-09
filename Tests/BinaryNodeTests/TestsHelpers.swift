@@ -31,7 +31,7 @@ import XCTest
 
 // MARK: - TestNode
 final class TestNode<Key, Value>: BinaryNode {
-    typealias Element = (Key, Value)
+    typealias Element = (key: Key, value: Value)
     
     var key: Key
     

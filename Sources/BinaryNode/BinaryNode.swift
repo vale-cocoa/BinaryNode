@@ -33,7 +33,7 @@ import Foundation
 /// Thus recursively defining a binary tree.
 ///
 /// - ToDo: conformance to CustomStringConvertible and CustomDebugStringConvertible
-public protocol BinaryNode: AnyObject, Sequence where Element == (Key, Value) {
+public protocol BinaryNode: AnyObject, Sequence where Element == (key: Key, value: Value) {
     
     associatedtype Key
     
@@ -66,7 +66,7 @@ extension BinaryNode {
 // MARK: - Sequence default implementation
 extension BinaryNode {
     /// The key-value pair for this node.
-    public var element: (key: Key, value: Value) { (key: key, value: value) }
+    public var element: Element { (key: key, value: value) }
     
     public var underestimatedCount: Int {
         1 + (left != nil ? 1 : 0) + (right != nil ? 1 : 0)
