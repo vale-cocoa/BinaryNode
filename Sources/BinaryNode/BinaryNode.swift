@@ -31,6 +31,8 @@ import Foundation
 /// That is a 2-node is a node with a key/value pair as element and two children nodes,
 /// one at its left and one at its right.
 /// Thus recursively defining a binary tree.
+///
+/// - ToDo: conformance to CustomStringConvertible and CustomDebugStringConvertible
 public protocol BinaryNode: AnyObject, Sequence where Element == (Key, Value) {
     
     associatedtype Key
@@ -64,7 +66,7 @@ extension BinaryNode {
 // MARK: - Sequence default implementation
 extension BinaryNode {
     /// The key-value pair for this node.
-    public var element: (Key, Value) { (key, value) }
+    public var element: (key: Key, value: Value) { (key: key, value: value) }
     
     public var underestimatedCount: Int {
         1 + (left != nil ? 1 : 0) + (right != nil ? 1 : 0)
